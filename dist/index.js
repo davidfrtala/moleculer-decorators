@@ -109,6 +109,13 @@ function Service(options = {}) {
                     : (base[key] = descriptor.value);
                 return;
             }
+            if (key === 'afterConnected'
+                || key === 'entityCreated'
+                || key === 'entityUpdated'
+                || key === 'entityRemoved') {
+                base[key] = descriptor.value;
+                return;
+            }
         });
         return class extends moleculer_1.Service {
             constructor(broker) {

@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const moleculer_1 = require("moleculer");
 const _ = require("lodash");
 const blacklist = [
     'created',
@@ -17,9 +16,6 @@ const defaultServiceOptions = {
     constructOverride: true,
     skipHandler: false
 };
-class BaseSchema {
-}
-exports.BaseSchema = BaseSchema;
 function Method(target, key, descriptor) {
     (target.methods || (target.methods = {}))[key] = descriptor.value;
 }
@@ -46,6 +42,7 @@ function Action(options = {}) {
     };
 }
 exports.Action = Action;
+const mockServiceBroker = new Object({ Promise });
 function Service(options = {}) {
     return function (constructor) {
         let base = {
@@ -61,12 +58,12 @@ function Service(options = {}) {
             delete options.name;
         }
         Object.assign(base, _.omit(options, _.keys(defaultServiceOptions)));
-        const proto = constructor.prototype;
+        const parentService = constructor.prototype;
         const vars = [];
-        Object.getOwnPropertyNames(proto).forEach(function (key) {
+        Object.getOwnPropertyNames(parentService).forEach(function (key) {
             if (key === 'constructor') {
                 if (_options.constructOverride) {
-                    const ServiceClass = new constructor.prototype[key]();
+                    const ServiceClass = new parentService.constructor(mockServiceBroker);
                     Object.getOwnPropertyNames(ServiceClass).forEach(function (key) {
                         if (blacklist.indexOf(key) === -1 &&
                             !_.isFunction(ServiceClass[key])) {
@@ -83,8 +80,8 @@ function Service(options = {}) {
                             for (let key in vars) {
                                 this[key] = vars[key];
                             }
-                            if (!_.isNil(Object.getOwnPropertyDescriptor(proto, 'created'))) {
-                                Object.getOwnPropertyDescriptor(proto, 'created').value.call(this, broker);
+                            if (!_.isNil(Object.getOwnPropertyDescriptor(parentService, 'created'))) {
+                                Object.getOwnPropertyDescriptor(parentService, 'created').value.call(this, broker);
                             }
                         },
                         writable: true,
@@ -95,7 +92,7 @@ function Service(options = {}) {
                 }
                 return;
             }
-            const descriptor = Object.getOwnPropertyDescriptor(proto, key);
+            const descriptor = Object.getOwnPropertyDescriptor(parentService, key);
             if (key === 'created' && !_options.constructOverride) {
                 base[key] = descriptor.value;
             }
@@ -117,9 +114,10 @@ function Service(options = {}) {
                 return;
             }
         });
-        return class extends moleculer_1.Service {
-            constructor(broker) {
-                super(broker, base);
+        return class extends parentService.constructor {
+            constructor(broker, schema) {
+                super(broker, schema);
+                this.parseServiceSchema(base);
             }
         };
     };

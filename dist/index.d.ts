@@ -1,17 +1,4 @@
-import { ServiceSchema, Action, ActionHandler, LoggerInstance, ServiceMethods, ServiceEvents, Actions, ServiceSettingSchema, GenericObject, ServiceBroker, ServiceEvent, ServiceEventHandler } from 'moleculer';
-export declare class BaseSchema {
-    [x: string]: any;
-    logger: LoggerInstance;
-    name: string;
-    broker: ServiceBroker;
-    version: string | number;
-    settings: ServiceSettingSchema;
-    metadata: GenericObject;
-    mixins: Array<ServiceSchema>;
-    actions: Actions;
-    methods: ServiceMethods;
-    events: ServiceEvents;
-}
+import { ServiceSchema, Action, ActionHandler, ServiceEvent, ServiceEventHandler } from 'moleculer';
 export interface Options extends Partial<ServiceSchema> {
     name?: string;
     constructOverride?: boolean;
